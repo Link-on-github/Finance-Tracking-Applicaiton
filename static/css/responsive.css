@@ -1,0 +1,28 @@
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        background-color: #35424a;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+    }
+    
+    .nav-links a {
+        padding: 15px;
+        border-top: 1px solid #575f6a;
+    }
+    
+    .nav-links.show {
+        display: flex;
+    }
+    
+    .form-container, .homepage, .stats-page, .parental-control-page, .goals-page, .tips-page {
+        padding: 15px;
+    }
+    
+    .transactions-list table, .transactions-list th, .transactions-list td {
+        font-size: 14px;
+    }
+}

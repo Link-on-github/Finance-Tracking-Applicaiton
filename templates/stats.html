@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="stats-page">
+    <h2>Your Statistics</h2>
+    <ul>
+        <li><strong>Total Transactions:</strong> {{ stats.total_transactions }}</li>
+        <li><strong>Total Amount:</strong> ${{ "%.2f"|format(stats.total_amount) }}</li>
+        <li><strong>Average Transaction:</strong> ${{ "%.2f"|format(stats.average_transaction) }}</li>
+    </ul>
+
+    <!-- Dropdown for time selection -->
+    <div>
+        <label for="time-period">Select Time Period:</label>
+        <select id="time-period">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+        </select>
+    </div>
+
+    <!-- Dropdown for plot type -->
+    <div>
+        <label for="plot-type">Select Plot Type:</label>
+        <select id="plot-type">
+            <option value="bar">Bar Chart</option>
+            <option value="line">Dot Plot</option>
+        </select>
+    </div>
+
+    <!-- Chart container -->
+    <div>
+        <canvas id="transaction-chart" width="400" height="200"></canvas>
+    </div>
+
+</div>
+
+<!-- Include Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Parse JSON data from the server
+    let dailyData = JSON.parse('{{ daily_data | safe }}');
+    let weeklyData = JSON.parse('{{ weekly_data | safe }}');
+    let monthlyData = JSON.parse('{{ monthly_data | safe }}');
+
+    // Chart.js setup
+    let ctx = document.getElementById('transaction-chart').getContext('2d');
+    let chart = new Chart(ctx, {
+        type: 'bar', // Default chart type
+        data: {
+            labels: dailyData.labels, // Default to daily data
+            datasets: [{
+                label: 'Transactions',
+                data: dailyData.values,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Function to update chart based on user input
+    function updateChart(timePeriod, plotType) {
+        let data;
+        if (timePeriod === 'daily') {
+            data = dailyData;
+        } else if (timePeriod === 'weekly') {
+            data = weeklyData;
+        } else {
+            data = monthlyData;
+        }
+
+        // Update chart type
+        chart.config.type = plotType;
+
+        // Update chart data
+        chart.data.labels = data.labels;
+        chart.data.datasets[0].data = data.values;
+
+        // Re-render the chart
+        chart.update();
+    }
+
+    // Event listeners for dropdowns
+    document.getElementById('time-period').addEventListener('change', function() {
+        let timePeriod = this.value;
+        let plotType = document.getElementById('plot-type').value;
+        updateChart(timePeriod, plotType);
+    });
+
+    document.getElementById('plot-type').addEventListener('change', function() {
+        let plotType = this.value;
+        let timePeriod = document.getElementById('time-period').value;
+        updateChart(timePeriod, plotType);
+    });
+</script>
+{% endblock %}

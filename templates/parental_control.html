@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="parental-control-page">
+    <h2>Parental Control</h2>
+    <form method="POST">
+        <label for="parental_email">Parent's Email:</label>
+        <input type="email" id="parental_email" name="parental_email" value="{{ parental_email }}" required>
+        
+        <button type="submit" class="btn">Update Parental Email</button>
+    </form>
+    {% if parental_email %}
+        <p>Current Parental Control Email: {{ parental_email }}</p>
+    {% else %}
+        <p>No parental control email set.</p>
+    {% endif %}
+</div>
+{% endblock %}
