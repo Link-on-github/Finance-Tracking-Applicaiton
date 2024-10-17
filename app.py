@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import pandas as pd
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import openpyxl
 from datetime import datetime
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'a_strong_secret_key'  # Ensure you set a strong secret key
@@ -204,71 +205,55 @@ def goals():
     return render_template('goals.html')
 
 # Tips Page
-@app.route('/tips')
+# @app.route('/tips')
+# def tips():
+#     if 'username' not in session:
+#         flash('Please log in to access this page.')
+#         return redirect(url_for('login'))
+#     return render_template('tips.html')
+@app.route('/tips', methods=['GET', 'POST'])
 def tips():
     if 'username' not in session:
         flash('Please log in to access this page.')
         return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        user_input = request.form['user_input']
+        response = get_gemini_response(user_input)
+        return jsonify({'response': response})
+
     return render_template('tips.html')
 
+def get_gemini_response(user_input):
+    # Set Gemini API endpoint and API key
+    gemini_api_endpoint = 'https://api.gemini.com/v1/marketdata/'
+    gemini_api_key = '<gemini api key>' # Add your own api key :)
+
+    # Check if user input is related to finance/investments/savings
+    finance_related_topics = ['stock', 'bond', 'investment', 'savings', 'finance', 'market', 'trading']
+    if any(topic in user_input.lower() for topic in finance_related_topics):
+        # Make API request to Gemini
+        response = requests.get(gemini_api_endpoint, headers={'X-GEMINI-APIKEY': gemini_api_key})
+        if response.status_code == 200:
+            data = response.json()
+            # Extract relevant information from API response
+            tip = extract_tip(data)
+            return tip
+        else:
+            return 'Error: Unable to retrieve data from Gemini API.'
+    else:
+        return 'Sorry, I can only provide finance-related tips.'
+
+def extract_tip(data):
+    # Implement logic to extract a relevant tip from the Gemini API response
+    # For example, you could extract the current price of a specific cryptocurrency
+    # or provide a general tip based on market trends
+    tip = 'Here\'s a tip: ' + data['bitcoin']['last']
+    return tip
+
+
+
 #Stats
-# @app.route('/stats')
-# def stats():
-#     if 'username' not in session:
-#         flash('Please log in to access this page.')
-#         return redirect(url_for('login'))
-    
-#     username = session['username']
-#     df_transactions = pd.read_excel(DATA_FILE, sheet_name='Transactions')
-
-#     # Ensure the 'Date' column is in datetime format
-#     df_transactions['Date'] = pd.to_datetime(df_transactions['Date'], errors='coerce')
-
-#     # Filter user transactions
-#     user_transactions = df_transactions[df_transactions['Username'] == username]
-
-#     # Make sure the 'Amount' column is numeric
-#     user_transactions['Amount'] = pd.to_numeric(user_transactions['Amount'], errors='coerce')
-
-#     # Compute daily, weekly, and monthly totals
-#     daily_data = user_transactions.groupby(user_transactions['Date'].dt.date)['Amount'].sum().reset_index()
-#     weekly_data = user_transactions.groupby(user_transactions['Date'].dt.to_period('W'))['Amount'].sum().reset_index()
-#     monthly_data = user_transactions.groupby(user_transactions['Date'].dt.to_period('M'))['Amount'].sum().reset_index()
-
-#     # Prepare data for Chart.js
-#     daily_data = {
-#         'labels': daily_data['Date'].astype(str).tolist(),
-#         'values': daily_data['Amount'].tolist()
-#     }
-#     weekly_data = {
-#         'labels': weekly_data['Date'].astype(str).tolist(),
-#         'values': weekly_data['Amount'].tolist()
-#     }
-#     monthly_data = {
-#         'labels': monthly_data['Date'].astype(str).tolist(),
-#         'values': monthly_data['Amount'].tolist()
-#     }
-
-#     # Compute overall stats
-#     total_transactions = len(user_transactions)
-#     total_amount = user_transactions['Amount'].sum()  # Ensure this is treated as numeric
-#     average_transaction = user_transactions['Amount'].mean() if total_transactions > 0 else 0
-
-#     stats_data = {
-#         'total_transactions': total_transactions,
-#         'total_amount': total_amount,
-#         'average_transaction': average_transaction
-#     }
-
-#     # Pass data as JSON to the template
-#     return render_template(
-#         'stats.html', 
-#         stats=stats_data, 
-#         daily_data=json.dumps(daily_data), 
-#         weekly_data=json.dumps(weekly_data), 
-#         monthly_data=json.dumps(monthly_data)
-#     )
-# Stats Page (New Endpoint)
 @app.route('/stats')
 def stats():
     if 'username' not in session:
