@@ -1,8 +1,33 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tips</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Tips</h1>
+    <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Ask me a question...">
+        <button type="submit">Send</button>
+    </form>
+    <div id="chat-log"></div>
 
-{% block content %}
-<div class="tips-page">
-    <h2>Tips</h2>
-    <p>Coming soon!</p>
-</div>
-{% endblock %}
+    <script>
+        $(document).ready(function() {
+            $('#chat-form').submit(function(event) {
+                event.preventDefault();
+                var userInput = $('#user-input').val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/tips',
+                    data: {user_input: userInput},
+                    success: function(response) {
+                        $('#chat-log').append('<p>' + response.response + '</p>');
+                        $('#user-input').val('');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
