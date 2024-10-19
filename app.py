@@ -3,7 +3,6 @@ import pandas as pd
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
-import openpyxl
 from datetime import datetime
 import requests
 
