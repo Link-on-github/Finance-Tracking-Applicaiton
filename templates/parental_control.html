@@ -1,18 +1,65 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="parental-control-page">
+<div class="parental-control">
     <h2>Parental Control</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <form method="POST">
-        <label for="parental_email">Parent's Email:</label>
+        <label for="parental_email">Parental Control Email:</label>
         <input type="email" id="parental_email" name="parental_email" value="{{ parental_email }}" required>
-        
         <button type="submit" class="btn">Update Parental Email</button>
     </form>
-    {% if parental_email %}
-        <p>Current Parental Control Email: {{ parental_email }}</p>
+
+    {% if is_parent %}
+        <h3>Children's Transactions</h3>
+        {% if children_transactions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in children_transactions %}
+                        <tr>
+                            <td>{{ txn.Username }}</td>
+                            <td>{{ '%.2f'|format(txn.Amount) }}</td>
+                            <td>{{ txn.Description }}</td>
+                            <td>{{ txn.Date.strftime('%Y-%m-%d') if txn.Date else 'N/A' }}</td>
+                            <td>{{ txn.Category }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No transactions from children.</p>
+        {% endif %}
     {% else %}
-        <p>No parental control email set.</p>
+        <p>You are not a parent.</p>
     {% endif %}
 </div>
+
+<script>
+// Automatically hide flash messages after 5 seconds
+setTimeout(function() {
+    var flashMessages = document.querySelector('.flash-messages');
+    if (flashMessages) {
+        flashMessages.style.display = 'none';
+    }
+}, 7000);  // 7000 ms = 7 seconds
+</script>
 {% endblock %}
