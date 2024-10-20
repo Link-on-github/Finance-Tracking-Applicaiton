@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import json
 from datetime import datetime
 import requests
+import google.generativeai as genai
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'a_strong_secret_key'  # Ensure you set a strong secret key
@@ -99,7 +100,7 @@ def login():
 
     return render_template('login.html')
 
-#Homepage
+# Homepage
 @app.route('/homepage', methods=['GET', 'POST'])
 def homepage():
     if 'username' not in session:
@@ -158,9 +159,7 @@ def homepage():
 
     return render_template('homepage.html', total_balance=total_balance, transactions=transactions)
 
-
-
-#Parental Control
+# Parental Control
 @app.route('/parental_control', methods=['GET', 'POST'])
 def parental_control():
     if 'username' not in session:
@@ -204,55 +203,34 @@ def goals():
     return render_template('goals.html')
 
 # Tips Page
-# @app.route('/tips')
-# def tips():
-#     if 'username' not in session:
-#         flash('Please log in to access this page.')
-#         return redirect(url_for('login'))
-#     return render_template('tips.html')
+genai.configure(api_key="AIzaSyB1E027AvutFZftck6C5AVRaj_IHVpLeyw")
+model = genai.GenerativeModel("gemini-pro")
+chat = model.start_chat(history=[])
+
+def get_gemini_response(question):
+    response = chat.send_message(question, stream=True)
+    return response
+
 @app.route('/tips', methods=['GET', 'POST'])
 def tips():
-    if 'username' not in session:
-        flash('Please log in to access this page.')
-        return redirect(url_for('login'))
+    if 'chat_history' not in session:
+        session['chat_history'] = []
 
     if request.method == 'POST':
-        user_input = request.form['user_input']
-        response = get_gemini_response(user_input)
-        return jsonify({'response': response})
+        user_input = request.form.get('input')
+        if user_input:
+            response = get_gemini_response(user_input)
+            session['chat_history'].append(("You", user_input))
+            for chunk in response:
+                session['chat_history'].append(("Bot", chunk.text))
+            # Save updated chat history
+            session.modified = True
 
-    return render_template('tips.html')
-
-def get_gemini_response(user_input):
-    # Set Gemini API endpoint and API key
-    gemini_api_endpoint = 'https://api.gemini.com/v1/marketdata/'
-    gemini_api_key = '<gemini api key>' # Add your own api key :)
-
-    # Check if user input is related to finance/investments/savings
-    finance_related_topics = ['stock', 'bond', 'investment', 'savings', 'finance', 'market', 'trading']
-    if any(topic in user_input.lower() for topic in finance_related_topics):
-        # Make API request to Gemini
-        response = requests.get(gemini_api_endpoint, headers={'X-GEMINI-APIKEY': gemini_api_key})
-        if response.status_code == 200:
-            data = response.json()
-            # Extract relevant information from API response
-            tip = extract_tip(data)
-            return tip
-        else:
-            return 'Error: Unable to retrieve data from Gemini API.'
-    else:
-        return 'Sorry, I can only provide finance-related tips.'
-
-def extract_tip(data):
-    # Implement logic to extract a relevant tip from the Gemini API response
-    # For example, you could extract the current price of a specific cryptocurrency
-    # or provide a general tip based on market trends
-    tip = 'Here\'s a tip: ' + data['bitcoin']['last']
-    return tip
+    return render_template('tips.html', chat_history=session['chat_history'])
 
 
 
-#Stats
+# Stats
 @app.route('/stats')
 def stats():
     if 'username' not in session:
