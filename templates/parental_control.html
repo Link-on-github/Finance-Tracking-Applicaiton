@@ -1,65 +1,193 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="parental-control">
-    <h2>Parental Control</h2>
+<div class="parental-control-container">
+    <h2 class="page-title">Parental Control</h2>
 
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul class="flash-messages">
-                {% for message in messages %}
-                    <li>{{ message }}</li>
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
-            </ul>
+            </div>
         {% endif %}
     {% endwith %}
 
-    <form method="POST">
-        <label for="parental_email">Parental Control Email:</label>
-        <input type="email" id="parental_email" name="parental_email" value="{{ parental_email }}" required>
-        <button type="submit" class="btn">Update Parental Email</button>
-    </form>
+    <div class="content-wrapper">
+        <div class="form-container">
+            <form method="POST" class="parental-email-form">
+                <div class="form-group">
+                    <label for="parental_email">Parental Control Email:</label>
+                    <input type="email" id="parental_email" name="parental_email" value="{{ parental_email }}" required>
+                </div>
+                <div class="button-container">
+                    <button type="submit" class="btn-update-parental">Update Parental Email</button>
+                </div>
+            </form>
+        </div>
 
-    {% if is_parent %}
-        <h3>Children's Transactions</h3>
-        {% if children_transactions %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Amount</th>
-                        <th>Description</th>
-                        <th>Date</th>
-                        <th>Category</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for txn in children_transactions %}
-                        <tr>
-                            <td>{{ txn.Username }}</td>
-                            <td>{{ '%.2f'|format(txn.Amount) }}</td>
-                            <td>{{ txn.Description }}</td>
-                            <td>{{ txn.Date.strftime('%Y-%m-%d') if txn.Date else 'N/A' }}</td>
-                            <td>{{ txn.Category }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        {% if is_parent %}
+            <div class="children-transactions">
+                <h3>Children's Transactions</h3>
+                {% if children_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for txn in children_transactions %}
+                                    <tr>
+                                        <td>{{ txn.Username }}</td>
+                                        <td>${{ '%.2f'|format(txn.Amount) }}</td>
+                                        <td>{{ txn.Description }}</td>
+                                        <td>{{ txn.Date.strftime('%Y-%m-%d') if txn.Date else 'N/A' }}</td>
+                                        <td>{{ txn.Category }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="no-transactions">No transactions from children.</p>
+                {% endif %}
+            </div>
         {% else %}
-            <p>No transactions from children.</p>
+            <p class="not-parent-message">You are not a parent.</p>
         {% endif %}
-    {% else %}
-        <p>You are not a parent.</p>
-    {% endif %}
+    </div>
 </div>
 
-<script>
-// Automatically hide flash messages after 5 seconds
-setTimeout(function() {
-    var flashMessages = document.querySelector('.flash-messages');
-    if (flashMessages) {
-        flashMessages.style.display = 'none';
+<style>
+    .parental-control-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-}, 7000);  // 7000 ms = 7 seconds
-</script>
+
+    .content-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .page-title {
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .flash-messages {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .form-container {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        width: 100%; max-width: 400px;
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .form-group input[type="email"] {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 0 auto;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn-update-parental {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #E0F7FF;
+        color: #007BFF;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-update-parental:hover {
+        background-color: #B3E8FF;
+    }
+
+    .children-transactions {
+        margin-top: 20px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table-striped {
+        border-collapse: collapse;
+    }
+
+    .table-striped th, .table-striped td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .table-striped th {
+        background-color: #f0f0f0;
+    }
+
+    .no-transactions {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .not-parent-message {
+        text-align: center;
+        margin-top: 20px;
+    }
+</style>
 {% endblock %}

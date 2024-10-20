@@ -181,38 +181,6 @@ def homepage():
 
 
 # Parental Control
-# @app.route('/parental_control', methods=['GET', 'POST'])
-# def parental_control():
-#     if 'username' not in session:
-#         flash('Please log in to access this page.')
-#         return redirect(url_for('login'))
-    
-#     username = session['username']
-#     df_users = pd.read_excel(DATA_FILE, sheet_name='Sheet1')
-
-#     if request.method == 'POST':
-#         parental_email = request.form['parental_email'].strip()
-
-#         if not parental_email:
-#             flash('Please enter a valid parental control email.')
-#             return redirect(url_for('parental_control'))
-
-#         # Update parental control email
-#         df_users.loc[df_users['Username'] == username, 'Parental Control Email'] = parental_email
-#         with pd.ExcelWriter(DATA_FILE, mode='a', if_sheet_exists='replace') as writer:
-#             df_users.to_excel(writer, sheet_name='Sheet1', index=False)
-
-#         flash('Parental control email updated successfully.')
-#         return redirect(url_for('parental_control'))
-
-#     # Retrieve current parental control email
-#     user_record = df_users[df_users['Username'] == username]
-#     if not user_record.empty:
-#         current_parental_email = user_record.iloc[0]['Parental Control Email']
-#     else:
-#         current_parental_email = ''
-
-#     return render_template('parental_control.html', parental_email=current_parental_email)
 @app.route('/parental_control', methods=['GET', 'POST'])
 def parental_control():
     if 'username' not in session:

@@ -15,7 +15,7 @@
     {% endwith %}
 
     <div class="balance-section">
-        <h3>Total Balance: ${{ '%.2f'|format(total_balance) }}</h3>
+        <h3>Total Spendings: ${{ '%.2f'|format(total_balance) }}</h3>
     </div>
     
 
@@ -47,7 +47,7 @@
                 <option value="Miscellaneous">Miscellaneous</option>
             </select>
     
-            <button type="submit" class="btn">Add Transaction</button>
+            <button type="submit" class="btn-add-transaction">Add Transaction</button>
         </form>
     </div>
     
@@ -81,12 +81,29 @@
     </div>
 </div>
 
+<style>
+    .btn-add-transaction {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #E0F7FF;
+        color: #007BFF;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-add-transaction:hover {
+        background-color: #B3E8FF;
+    }
+</style>
+
 <script>
 // Automatically hide flash messages after 5 seconds
 setTimeout(function() {
     var flashMessages = document.querySelector('.flash-messages');
     if (flashMessages) {
-        flashMessages.style.display = 'none';
+         flashMessages.style.display = 'none';
     }
 }, 7000);  // 5000 ms = 5 seconds
 </script>

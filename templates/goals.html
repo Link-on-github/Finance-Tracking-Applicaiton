@@ -1,8 +1,142 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="goals-page">
-    <h2>Goals & Reminders</h2>
-    <p>Coming soon!</p>
+<div class="goals-container">
+    <h1>Set Subscription Reminder</h1>
+    <form method="POST" class="reminder-form">
+        <div class="form-group">
+            <label for="subscription_name">Subscription Name:</label>
+            <input type="text" id="subscription_name" name="subscription_name" required placeholder="e.g., Netflix">
+        </div>
+        
+        <div class="form-group">
+            <label for="reminder_type">Reminder Type:</label>
+            <select id="reminder_type" name="reminder_type" required>
+                <option value="" disabled selected>Select a reminder type</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annual">Annual</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="renewal_date">Renewal Date:</label>
+            <input type="date" id="renewal_date" name="renewal_date" required>
+        </div>
+        
+        <button type="submit" class="submit-btn">Set Reminder</button>
+    </form>
+
+    <h2>Your Active Subscriptions</h2>
+    <table class="subscriptions-table">
+        <thead>
+            <tr>
+                <th>Subscription Name</th>
+                <th>Reminder Type</th>
+                <th>Renewal Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if active_subscriptions %}
+                {% for subscription in active_subscriptions %}
+                    <tr>
+                        <td>{{ subscription['Subscription Name'] }}</td>
+                        <td>{{ subscription['Reminder Type'] }}</td>
+                        <td>{{ subscription['Renewal Date'] }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3" class="no-subscriptions">No active subscriptions found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
+
+<style>
+    .goals-container {
+        margin: 40px auto;
+        padding: 20px;
+        max-width: 800px;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    h1, h2 {
+        text-align: center;
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .reminder-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .form-group input, .form-group select {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .submit-btn {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #E0F7FF; /* Much lighter shade of blue */
+        color: #007BFF; /* Slightly darker blue for the text */
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .submit-btn:hover {
+        background-color: #B3E8FF; /* Slightly darker when hovered */
+    }
+
+    .subscriptions-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .subscriptions-table th, .subscriptions-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    .subscriptions-table th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: bold;
+    }
+
+    .subscriptions-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .no-subscriptions {
+        color: #999;
+        text-align: center;
+        font-style: italic;
+    }
+</style>
 {% endblock %}

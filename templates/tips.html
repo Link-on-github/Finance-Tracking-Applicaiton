@@ -39,17 +39,18 @@
             margin-bottom: 20px;
             font-size: 16px;
         }
-        button {
-            background-color: #28a745;
-            color: white;
+        .btn-ask-question {
+            padding: 10px 20px;
             border: none;
-            padding: 10px 15px;
             border-radius: 5px;
+            background-color: #E0F7FF;
+            color: #007BFF;
+            font-size: 1rem;
             cursor: pointer;
-            font-size: 16px;
+            transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #218838;
+        .btn-ask-question:hover {
+            background-color: #B3E8FF;
         }
         .response {
             max-width: 600px;
@@ -81,7 +82,7 @@
     <form method="POST">
         <label for="input">Input:</label>
         <input type="text" id="input" name="input" required placeholder="Ask your question here...">
-        <button type="submit">Ask the question</button>
+        <button type="submit" class="btn-ask-question">Ask the question</button>
     </form>
 
     <div class="response">
