@@ -1,33 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tips</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini LLM Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .response {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-history {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-history p {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+    </style>
 </head>
 <body>
-    <h1>Tips</h1>
-    <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Ask me a question...">
-        <button type="submit">Send</button>
-    </form>
-    <div id="chat-log"></div>
+    <h1>Finance Bot</h1>
 
-    <script>
-        $(document).ready(function() {
-            $('#chat-form').submit(function(event) {
-                event.preventDefault();
-                var userInput = $('#user-input').val();
-                $.ajax({
-                    type: 'POST',
-                    url: '/tips',
-                    data: {user_input: userInput},
-                    success: function(response) {
-                        $('#chat-log').append('<p>' + response.response + '</p>');
-                        $('#user-input').val('');
-                    }
-                });
-            });
-        });
-    </script>
+    <form method="POST">
+        <label for="input">Input:</label>
+        <input type="text" id="input" name="input" required placeholder="Ask your question here...">
+        <button type="submit">Ask the question</button>
+    </form>
+
+    <div class="response">
+        <h2>The Response is:</h2>
+        <div>
+            {% for role, text in chat_history %}
+                <p><strong>{{ role }}:</strong> {{ text }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-history">
+        <h2>The Chat History is:</h2>
+        <div>
+            {% for role, text in chat_history %}
+                <p><strong>{{ role }}:</strong> {{ text }}</p>
+            {% endfor %}
+        </div>
+    </div>
 </body>
 </html>
+{% endblock %}
