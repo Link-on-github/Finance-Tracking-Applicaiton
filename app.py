@@ -6,11 +6,20 @@ import json
 from datetime import datetime
 import requests
 import google.generativeai as genai
+from apscheduler.schedulers.background import BackgroundScheduler
+
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'a_strong_secret_key'  # Ensure you set a strong secret key
 
-DATA_FILE = 'data.xlsx'
+
+
+DATA_FILE = 'data.xlsx' # Stores user login info and transaction history
+GOALS_FILE = 'Book.xlsx'# Stores user's financial goals and reminders
+SHEET_NAME = 'Sheet1'  # Name of the sheet in the Book.xlsx file
+
+
 
 # Initialize Excel file if it doesn't exist
 def init_data_file():
@@ -23,14 +32,35 @@ def init_data_file():
             # Transactions sheet
             df_transactions = pd.DataFrame(columns=['Username', 'Amount', 'Description'])
             df_transactions.to_excel(writer, sheet_name='Transactions', index=False)
+# Initialize Excel file if it doesn't exist
+# def init_data_file():
+#     if not os.path.exists(DATA_FILE):
+#         with pd.ExcelWriter(DATA_FILE) as writer:
+#             # Sheet1 for Users
+#             df_users = pd.DataFrame(columns=['Username', 'Email', 'Password', 'Balance', 'Parental Control Email'])
+#             df_users.to_excel(writer, sheet_name='Sheet1', index=False)
+            
+#             # Transactions sheet
+#             df_transactions = pd.DataFrame(columns=['Username', 'Amount', 'Description'])
+#             df_transactions.to_excel(writer, sheet_name='Transactions', index=False)
+
+#             # Reminders sheet
+#             df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+#             df_reminders.to_excel(writer, sheet_name='Reminders', index=False)
+
+
 
 # Call initialization function
 init_data_file()
+
+
 
 # Home Page
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
 
 # User Signup
 @app.route('/signup', methods=['GET', 'POST'])
@@ -71,6 +101,8 @@ def signup():
 
     return render_template('signup.html')
 
+
+
 # User Login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -99,6 +131,8 @@ def login():
             return redirect(url_for('login'))
 
     return render_template('login.html')
+
+
 
 # Homepage
 @app.route('/homepage', methods=['GET', 'POST'])
@@ -159,6 +193,8 @@ def homepage():
 
     return render_template('homepage.html', total_balance=total_balance, transactions=transactions)
 
+
+
 # Parental Control
 @app.route('/parental_control', methods=['GET', 'POST'])
 def parental_control():
@@ -194,13 +230,124 @@ def parental_control():
     return render_template('parental_control.html', parental_email=current_parental_email)
 
 
+
 # Goals Page
-@app.route('/goals')
+# app.route('/goals', methods=['GET', 'POST'])
+# def goals():
+#     if 'username' not in session:
+#         flash('Please log in to access this page.')
+#         return redirect(url_for('login'))
+
+#     if request.method == 'POST':
+#         subscription_name = request.form['subscription_name'].strip()
+#         reminder_type = request.form['reminder_type']
+#         renewal_date = request.form['renewal_date']
+
+#         # Save the reminder to the Excel file
+#         try:
+#             save_reminder(session['username'], subscription_name, reminder_type, renewal_date)
+#             flash(f'Reminder set for {subscription_name} ({reminder_type}) on {renewal_date}!')
+#         except Exception as e:
+#             flash(f"Error saving reminder: {e}")
+#         return redirect(url_for('goals'))
+
+#     # Load active subscriptions from the Reminders sheet
+#     try:
+#         df_reminders = pd.read_excel(DATA_FILE, sheet_name='Reminders', engine='openpyxl')
+
+#         # Filter subscriptions for the logged-in user, ignoring leading/trailing spaces
+#         active_subscriptions = df_reminders[df_reminders['Username'].str.strip().eq(session['username'].strip())]
+
+#     except Exception as e:
+#         flash(f"Error reading Excel file: {e}")
+#         active_subscriptions = pd.DataFrame()  # Empty DataFrame if an error occurs
+
+#     # Convert DataFrame to a list of dictionaries for easier rendering
+#     active_subscriptions_list = active_subscriptions.to_dict('records')
+
+#     return render_template('goals.html', active_subscriptions=active_subscriptions_list)
+
+# def save_reminder(username, subscription_name, reminder_type, renewal_date):
+#     # Try to load the existing reminders or create an empty DataFrame if the file does not exist
+#     if os.path.exists(DATA_FILE):
+#         df_reminders = pd.read_excel(DATA_FILE, sheet_name='Reminders', engine='openpyxl')
+#     else:
+#         df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+
+#     new_reminder = pd.DataFrame([[username, subscription_name, reminder_type, renewal_date]], 
+#                                  columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+
+#     # Append the new reminder to the existing DataFrame
+#     updated_reminders = pd.concat([df_reminders, new_reminder], ignore_index=True)
+
+#     # Write the updated data back to the Excel file
+#     with pd.ExcelWriter(DATA_FILE, engine='openpyxl', mode='w') as writer:
+#         updated_reminders.to_excel(writer, sheet_name='Reminders', index=False)
+
+# Updated DATA_FILE for the goals page
+
+
+
+@app.route('/goals', methods=['GET', 'POST'])
 def goals():
     if 'username' not in session:
         flash('Please log in to access this page.')
         return redirect(url_for('login'))
-    return render_template('goals.html')
+
+    if request.method == 'POST':
+        subscription_name = request.form['subscription_name'].strip()
+        reminder_type = request.form['reminder_type']
+        renewal_date = request.form['renewal_date']
+
+        # Save the reminder to the new Excel file (Book.xlsx)
+        try:
+            save_reminder(session['username'], subscription_name, reminder_type, renewal_date)
+            flash(f'Reminder set for {subscription_name} ({reminder_type}) on {renewal_date}!')
+        except Exception as e:
+            flash(f"Error saving reminder: {e}")
+        return redirect(url_for('goals'))
+
+    # Load active subscriptions from the updated file (Book.xlsx)
+    try:
+        df_reminders = pd.read_excel(GOALS_FILE, sheet_name=SHEET_NAME, engine='openpyxl')
+
+        # Filter subscriptions for the logged-in user, ignoring leading/trailing spaces
+        active_subscriptions = df_reminders[df_reminders['Username'].str.strip().eq(session['username'].strip())]
+
+    except Exception as e:
+        flash(f"Error reading Excel file: {e}")
+        active_subscriptions = pd.DataFrame()  # Empty DataFrame if an error occurs
+
+    # Convert DataFrame to a list of dictionaries for easier rendering
+    active_subscriptions_list = active_subscriptions.to_dict('records')
+
+    return render_template('goals.html', active_subscriptions=active_subscriptions_list)
+
+def save_reminder(username, subscription_name, reminder_type, renewal_date):
+    # Check if the file exists
+    if os.path.exists(GOALS_FILE):
+        try:
+            # Try to load the existing reminders from 'Sheet1'
+            df_reminders = pd.read_excel(GOALS_FILE, sheet_name=SHEET_NAME, engine='openpyxl')
+        except ValueError:
+            # If the sheet doesn't exist, create an empty DataFrame
+            df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+    else:
+        # If the file does not exist, create an empty DataFrame
+        df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+
+    # Create a new reminder entry
+    new_reminder = pd.DataFrame([[username, subscription_name, reminder_type, renewal_date]], 
+                                 columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
+
+    # Append the new reminder to the existing DataFrame
+    updated_reminders = pd.concat([df_reminders, new_reminder], ignore_index=True)
+
+    # Write the updated data back to the Excel file
+    with pd.ExcelWriter(GOALS_FILE, engine='openpyxl', mode='w') as writer:
+        updated_reminders.to_excel(writer, sheet_name=SHEET_NAME, index=False)
+
+
 
 # Tips Page
 genai.configure(api_key="AIzaSyB1E027AvutFZftck6C5AVRaj_IHVpLeyw")
@@ -297,12 +444,17 @@ def stats():
         category_data=json.dumps(category_pie_data)  # Pass category pie data
     )
 
+
+
 # Logout
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     flash('You have been logged out.')
     return redirect(url_for('index'))
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
