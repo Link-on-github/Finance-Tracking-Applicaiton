@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 import requests
 import google.generativeai as genai
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 
 
 
@@ -32,21 +32,6 @@ def init_data_file():
             # Transactions sheet
             df_transactions = pd.DataFrame(columns=['Username', 'Amount', 'Description'])
             df_transactions.to_excel(writer, sheet_name='Transactions', index=False)
-# Initialize Excel file if it doesn't exist
-# def init_data_file():
-#     if not os.path.exists(DATA_FILE):
-#         with pd.ExcelWriter(DATA_FILE) as writer:
-#             # Sheet1 for Users
-#             df_users = pd.DataFrame(columns=['Username', 'Email', 'Password', 'Balance', 'Parental Control Email'])
-#             df_users.to_excel(writer, sheet_name='Sheet1', index=False)
-            
-#             # Transactions sheet
-#             df_transactions = pd.DataFrame(columns=['Username', 'Amount', 'Description'])
-#             df_transactions.to_excel(writer, sheet_name='Transactions', index=False)
-
-#             # Reminders sheet
-#             df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
-#             df_reminders.to_excel(writer, sheet_name='Reminders', index=False)
 
 
 
@@ -196,6 +181,38 @@ def homepage():
 
 
 # Parental Control
+# @app.route('/parental_control', methods=['GET', 'POST'])
+# def parental_control():
+#     if 'username' not in session:
+#         flash('Please log in to access this page.')
+#         return redirect(url_for('login'))
+    
+#     username = session['username']
+#     df_users = pd.read_excel(DATA_FILE, sheet_name='Sheet1')
+
+#     if request.method == 'POST':
+#         parental_email = request.form['parental_email'].strip()
+
+#         if not parental_email:
+#             flash('Please enter a valid parental control email.')
+#             return redirect(url_for('parental_control'))
+
+#         # Update parental control email
+#         df_users.loc[df_users['Username'] == username, 'Parental Control Email'] = parental_email
+#         with pd.ExcelWriter(DATA_FILE, mode='a', if_sheet_exists='replace') as writer:
+#             df_users.to_excel(writer, sheet_name='Sheet1', index=False)
+
+#         flash('Parental control email updated successfully.')
+#         return redirect(url_for('parental_control'))
+
+#     # Retrieve current parental control email
+#     user_record = df_users[df_users['Username'] == username]
+#     if not user_record.empty:
+#         current_parental_email = user_record.iloc[0]['Parental Control Email']
+#     else:
+#         current_parental_email = ''
+
+#     return render_template('parental_control.html', parental_email=current_parental_email)
 @app.route('/parental_control', methods=['GET', 'POST'])
 def parental_control():
     if 'username' not in session:
@@ -204,6 +221,7 @@ def parental_control():
     
     username = session['username']
     df_users = pd.read_excel(DATA_FILE, sheet_name='Sheet1')
+    user_record = df_users[df_users['Username'] == username].iloc[0]
 
     if request.method == 'POST':
         parental_email = request.form['parental_email'].strip()
@@ -220,74 +238,27 @@ def parental_control():
         flash('Parental control email updated successfully.')
         return redirect(url_for('parental_control'))
 
-    # Retrieve current parental control email
-    user_record = df_users[df_users['Username'] == username]
-    if not user_record.empty:
-        current_parental_email = user_record.iloc[0]['Parental Control Email']
-    else:
-        current_parental_email = ''
+    # Check if the user is a parent
+    children_users = df_users[df_users['Parental Control Email'] == user_record['Email']]
+    children_transactions = []
 
-    return render_template('parental_control.html', parental_email=current_parental_email)
+    if not children_users.empty:
+        df_transactions = pd.read_excel(DATA_FILE, sheet_name='Transactions')
+        for child_username in children_users['Username']:
+            child_transactions = df_transactions[df_transactions['Username'] == child_username].to_dict('records')
+            children_transactions.extend(child_transactions)
+
+    # Sort transactions by date (most recent first)
+    children_transactions.sort(key=lambda x: x['Date'], reverse=True)
+
+    return render_template('parental_control.html', 
+                           parental_email=user_record['Parental Control Email'],
+                           is_parent=not children_users.empty,
+                           children_transactions=children_transactions)
 
 
 
 # Goals Page
-# app.route('/goals', methods=['GET', 'POST'])
-# def goals():
-#     if 'username' not in session:
-#         flash('Please log in to access this page.')
-#         return redirect(url_for('login'))
-
-#     if request.method == 'POST':
-#         subscription_name = request.form['subscription_name'].strip()
-#         reminder_type = request.form['reminder_type']
-#         renewal_date = request.form['renewal_date']
-
-#         # Save the reminder to the Excel file
-#         try:
-#             save_reminder(session['username'], subscription_name, reminder_type, renewal_date)
-#             flash(f'Reminder set for {subscription_name} ({reminder_type}) on {renewal_date}!')
-#         except Exception as e:
-#             flash(f"Error saving reminder: {e}")
-#         return redirect(url_for('goals'))
-
-#     # Load active subscriptions from the Reminders sheet
-#     try:
-#         df_reminders = pd.read_excel(DATA_FILE, sheet_name='Reminders', engine='openpyxl')
-
-#         # Filter subscriptions for the logged-in user, ignoring leading/trailing spaces
-#         active_subscriptions = df_reminders[df_reminders['Username'].str.strip().eq(session['username'].strip())]
-
-#     except Exception as e:
-#         flash(f"Error reading Excel file: {e}")
-#         active_subscriptions = pd.DataFrame()  # Empty DataFrame if an error occurs
-
-#     # Convert DataFrame to a list of dictionaries for easier rendering
-#     active_subscriptions_list = active_subscriptions.to_dict('records')
-
-#     return render_template('goals.html', active_subscriptions=active_subscriptions_list)
-
-# def save_reminder(username, subscription_name, reminder_type, renewal_date):
-#     # Try to load the existing reminders or create an empty DataFrame if the file does not exist
-#     if os.path.exists(DATA_FILE):
-#         df_reminders = pd.read_excel(DATA_FILE, sheet_name='Reminders', engine='openpyxl')
-#     else:
-#         df_reminders = pd.DataFrame(columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
-
-#     new_reminder = pd.DataFrame([[username, subscription_name, reminder_type, renewal_date]], 
-#                                  columns=['Username', 'Subscription Name', 'Reminder Type', 'Renewal Date'])
-
-#     # Append the new reminder to the existing DataFrame
-#     updated_reminders = pd.concat([df_reminders, new_reminder], ignore_index=True)
-
-#     # Write the updated data back to the Excel file
-#     with pd.ExcelWriter(DATA_FILE, engine='openpyxl', mode='w') as writer:
-#         updated_reminders.to_excel(writer, sheet_name='Reminders', index=False)
-
-# Updated DATA_FILE for the goals page
-
-
-
 @app.route('/goals', methods=['GET', 'POST'])
 def goals():
     if 'username' not in session:
