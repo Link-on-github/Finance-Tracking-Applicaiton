@@ -289,7 +289,7 @@ def save_reminder(username, subscription_name, reminder_type, renewal_date):
 
 
 # Tips Page
-genai.configure(api_key="AIzaSyB1E027AvutFZftck6C5AVRaj_IHVpLeyw")
+genai.configure(api_key="<Your API KEY>") # User your own api key :)
 model = genai.GenerativeModel("gemini-pro")
 chat = model.start_chat(history=[])
 
